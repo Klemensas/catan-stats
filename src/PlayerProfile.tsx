@@ -21,10 +21,6 @@ const getGameStats = (games: GameData[], targetPlayer?: string) =>
       acc.base.cities += playerData.base?.cities ?? 0;
       acc.base.settlements += playerData.base?.settlements ?? 0;
 
-      console.log(
-        playerData.name,
-        playerData.extraPoints?.items.victoryScience ?? 0
-      );
       acc.extra.roads += (playerData.extraPoints?.items.roads ?? 0) / 2;
       acc.extra.merchant += playerData.extraPoints?.items.merchant ?? 0;
       acc.extra.defender += playerData.extraPoints?.items.defender ?? 0;

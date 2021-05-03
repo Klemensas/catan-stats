@@ -7,6 +7,7 @@ import {
   TextField,
   InputAdornment,
   CircularProgress,
+  Box,
 } from "@material-ui/core";
 import Data from "./Data";
 
@@ -23,33 +24,37 @@ function App() {
   useLocationUpdater(fileUrl);
 
   return (
-    <div style={{ paddingTop: "10vh" }}>
-      <div style={{ textAlign: "center" }}>
+    <Box pt={4}>
+      <Box
+        textAlign="center"
+        display="flex"
+        alignItems="center"
+        flexDirection="column"
+      >
+        <Typography variant="h1">Catan stats</Typography>
         {!data && (
-          <Typography variant="h1" style={{ paddingBottom: "2rem" }}>
-            👋 input a file
-          </Typography>
+          <Typography variant="h2">👋 gimme something to visualize</Typography>
         )}
-        <TextField
-          id="outlined-basic"
-          value={fileUrl}
-          label={error ? error?.toString() : "CSV or JSON URL"}
-          variant="outlined"
-          fullWidth
-          error={!!error}
-          onChange={(event) => setFileUrl(event.target.value)}
-          style={{ maxWidth: "60vw" }}
-          InputProps={{
-            endAdornment: isLoading && (
-              <InputAdornment position="end">
-                <CircularProgress size={24} />
-              </InputAdornment>
-            ),
-          }}
-        />
-        {data && <Data data={data} />}
-      </div>
-    </div>
+        <Box maxWidth={600} width="100%" pt={2}>
+          <TextField
+            value={fileUrl}
+            label={error ? error?.toString() : "CSV or JSON URL"}
+            variant="outlined"
+            fullWidth
+            error={!!error}
+            onChange={(event) => setFileUrl(event.target.value)}
+            InputProps={{
+              endAdornment: isLoading && (
+                <InputAdornment position="end">
+                  <CircularProgress size={24} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+      </Box>
+      {data && <Data data={data} />}
+    </Box>
   );
 }
 

@@ -24,7 +24,7 @@ type ExtraPoints = {
   items: Partial<Record<ExtraPointItem, number>>;
 };
 
-type PlayerData = {
+export type GamePlayerData = {
   name: string;
   score: number;
   base?: ReturnType<typeof parseBase>;
@@ -36,7 +36,7 @@ type PlayerData = {
 export type GameData = {
   gameNo: string;
   date: string;
-  players: PlayerData[];
+  players: GamePlayerData[];
 };
 
 function handleUnrecognizedInput(input: string) {

@@ -10,6 +10,9 @@ import {
   Grid,
   Paper,
   Container,
+  FormControlLabel,
+  Switch,
+  colors,
 } from "@material-ui/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -21,6 +24,7 @@ import {
   faSadCry,
   faClock,
   faUsers,
+  faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -32,7 +36,7 @@ import { ResponsiveLine } from "@nivo/line";
 import { ResponsivePie } from "@nivo/pie";
 import { ResponsiveBar } from "@nivo/bar";
 
-import { GameData } from "./useCsvParser";
+import { GameData, GamePlayerData } from "./useCsvParser";
 import PlayerProfile from "./PlayerProfile";
 
 const gameRecency = [
@@ -59,10 +63,22 @@ export type PlayerData = {
   games: GameData[];
 };
 
+function playersWithOrder(
+  players: GamePlayerData[]
+): players is Array<GamePlayerData & { order: number }> {
+  return players[0].order !== undefined;
+}
+
+type Ranks = {
+  first: number;
+  second: number;
+  third: number;
+  fourth: number;
+};
+
 function Data({ data }: { data: GameData[] }) {
   const lastGame = data[data.length - 1];
   const firstGame = data[0];
-  console.info("ddd", data);
 
   const lastGameDate = new Date(lastGame.date);
   const firstGameDate = new Date(firstGame.date);
@@ -81,6 +97,9 @@ function Data({ data }: { data: GameData[] }) {
   ];
 
   const [blacklistedPlayers, setBlacklistedPlayers] = useState<string[]>([]);
+  const [requiredGameStats, setRequiredGameStats] = useState<
+    Array<"order" | "point-details">
+  >([]);
 
   const dateFilteredGames = data.filter(
     ({ date }) =>
@@ -95,12 +114,57 @@ function Data({ data }: { data: GameData[] }) {
       !players.some(({ name }) => blacklistedPlayers.includes(name))
   );
 
-  const datePlayers = [
+  const gamesMissingStats = playerFilteredGames
+    .filter(({ players: [{ base, development, extraPoints, order }] }) =>
+      [base, development, extraPoints, order].includes(undefined)
+    )
+    .map(({ gameNo, players: [{ base, development, extraPoints, order }] }) => {
+      const missingFields = [];
+
+      if (!base) missingFields.push("base");
+      if (!development) missingFields.push("development");
+      if (!extraPoints) missingFields.push("extraPoints");
+      if (order === undefined) missingFields.push("order");
+
+      return {
+        gameNo,
+        missingFields,
+      };
+    });
+
+  const filteredGames = !requiredGameStats.length
+    ? playerFilteredGames
+    : playerFilteredGames.filter(
+        (game) =>
+          !gamesMissingStats.find(({ gameNo, missingFields }) => {
+            if (gameNo !== game.gameNo) return false;
+
+            if (
+              requiredGameStats.includes("order") &&
+              missingFields.includes("order")
+            )
+              return true;
+
+            if (
+              requiredGameStats.includes("point-details") &&
+              missingFields.some((field) => field !== "order")
+            )
+              return true;
+
+            return false;
+          })
+      );
+
+  const shownGamesMissingStats = gamesMissingStats.filter(({ gameNo }) =>
+    filteredGames.find((game) => game.gameNo === gameNo)
+  );
+
+  const dateAvailablePlayers = [
     ...new Set(
       dateFilteredGames.flatMap((game) => game.players.map(({ name }) => name))
     ),
   ];
-  const players = playerFilteredGames.reduce(
+  const players = filteredGames.reduce(
     (acc: Record<string, PlayerData>, game) => {
       game.players.forEach((player, index) => {
         const place = index + 1;
@@ -142,6 +206,33 @@ function Data({ data }: { data: GameData[] }) {
     if (playersBelowMinGameCount)
       setBlacklistedPlayers(playersBelowMinGameCount);
   }, []);
+
+  const victoriesByOrder = filteredGames.reduce(
+    (
+      acc: Partial<
+        Record<
+          typeof placeNames[number],
+          Partial<Record<typeof placeNames[number], number>>
+        >
+      >,
+      { players }
+    ) => {
+      if (!playersWithOrder(players)) return acc;
+
+      const order = players.map(({ order }) => order);
+      order.forEach((order, index) => {
+        const orderPositionName = placeNames[order - 1];
+        const position = placeNames[index];
+        const orderPositions = acc[orderPositionName] || {};
+
+        orderPositions[position] = (orderPositions[position] || 0) + 1;
+        acc[orderPositionName] = orderPositions;
+      });
+
+      return acc;
+    },
+    {}
+  );
 
   return (
     <Container>
@@ -199,9 +290,9 @@ function Data({ data }: { data: GameData[] }) {
       </Box>
 
       <Box
-        py={4}
-        px={6}
-        mx={-6}
+        py={2}
+        px={2}
+        mx={-2}
         position="sticky"
         top={0}
         display="flex"
@@ -231,8 +322,74 @@ function Data({ data }: { data: GameData[] }) {
             )}
           />
         </Box>
+        {!!gamesMissingStats.length && (
+          <Box display="flex" flex="1" px={2} alignItems="center">
+            <Box>
+              <FormControlLabel
+                control={
+                  <Switch
+                    size="small"
+                    checked={!requiredGameStats.includes("order")}
+                    onChange={() =>
+                      setRequiredGameStats((requiredStats) =>
+                        requiredStats.includes("order")
+                          ? requiredStats.filter((stat) => stat !== "order")
+                          : [...requiredStats, "order"]
+                      )
+                    }
+                    color="primary"
+                  />
+                }
+                label="Games missing start order"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    size="small"
+                    checked={!requiredGameStats.includes("point-details")}
+                    onChange={() =>
+                      setRequiredGameStats((requiredStats) =>
+                        requiredStats.includes("point-details")
+                          ? requiredStats.filter(
+                              (stat) => stat !== "point-details"
+                            )
+                          : [...requiredStats, "point-details"]
+                      )
+                    }
+                    color="primary"
+                  />
+                }
+                label="Games missing point details"
+              />
+            </Box>
+            <Tooltip
+              title={shownGamesMissingStats.map(({ gameNo, missingFields }) => {
+                return (
+                  <Box>
+                    Game #{gameNo} is missing - {missingFields.join(", ")} data
+                  </Box>
+                );
+              })}
+              placement="top"
+            >
+              <Box
+                pl={3}
+                component="span"
+                visibility={
+                  !!shownGamesMissingStats.length ? "visible" : "hidden"
+                }
+              >
+                <FontAwesomeIcon
+                  icon={faExclamationTriangle}
+                  size="lg"
+                  color={colors.deepOrange[500]}
+                />
+              </Box>
+            </Tooltip>
+          </Box>
+        )}
         <Box>
-          {datePlayers.map((name) => {
+          {dateAvailablePlayers.map((name) => {
             const isBlacklisted = blacklistedPlayers.includes(name);
 
             return (
@@ -255,20 +412,21 @@ function Data({ data }: { data: GameData[] }) {
         </Box>
       </Box>
       <Box my={4}>
+        <Box mb={2}>
+          <Typography variant="h4">Shown player data</Typography>
+        </Box>
         <Grid container spacing={3}>
-          {Object.values(players)
-            // .filter((player) => player.games.length > 5)
-            .map((player) => (
-              <Grid item sm={4}>
-                <PlayerProfile
-                  key={player.name}
-                  player={player}
-                  playerGames={player.games}
-                />
-              </Grid>
-            ))}
+          {Object.values(players).map((player) => (
+            <Grid item sm={4}>
+              <PlayerProfile
+                key={player.name}
+                player={player}
+                playerGames={player.games}
+              />
+            </Grid>
+          ))}
         </Grid>
-        {/* <PlayerProfile playerGames={playerFilteredGames} /> */}
+        {/* <PlayerProfile playerGames={filteredGames} /> */}
       </Box>
       <Box mt={4}>
         <Grid container spacing={3}>
@@ -276,7 +434,7 @@ function Data({ data }: { data: GameData[] }) {
             <Typography variant="h4">1st place percentage over time</Typography>
             <ResponsiveLine
               data={Object.values(players).map((player) => {
-                const playerGames = playerFilteredGames.filter((game) =>
+                const playerGames = filteredGames.filter((game) =>
                   game.players.some(({ name }) => name === player.name)
                 );
 
@@ -424,9 +582,8 @@ function Data({ data }: { data: GameData[] }) {
               )}
               label={({ value }) => {
                 if (typeof value !== "number") return "";
-                // console.log("www", bar);
+
                 return `${Math.round(value * 10000) / 100}%`;
-                // return String(value);
               }}
               keys={placeNames as any}
               indexBy="name"
@@ -465,7 +622,7 @@ function Data({ data }: { data: GameData[] }) {
             <Typography variant="h4">Average score over time</Typography>
             <ResponsiveLine
               data={Object.values(players).map((player) => {
-                const playerGames = playerFilteredGames.filter((game) =>
+                const playerGames = filteredGames.filter((game) =>
                   game.players.some(({ name }) => name === player.name)
                 );
 
@@ -509,30 +666,7 @@ function Data({ data }: { data: GameData[] }) {
               pointBorderWidth={2}
               useMesh
               enableCrosshair={false}
-              // yFormat={(value) => `${Math.round(+value * 10000) / 100}%`}
-              // tooltip={(item) => {
-              //   // Read from formatted data
-              //   const gameData = data.find(
-              //     ({ gameNo }) => gameNo === String(item.point.data.x)
-              //   );
-              //   if (!gameData) return <div>Missing game data</div>;
-
-              //   console.log("waaa", item, gameData);
-              //   return (
-              //     <Paper>
-              //       <Box p={1} alignContent="left">
-              //         <div>{gameData.date}</div>
-              //         {gameData.players.map((player) => (
-              //           <div>
-              //             {player.name}: {player.score}
-              //           </div>
-              //         ))}
-              //       </Box>
-              //     </Paper>
-              //   );
-              // }}
               yScale={{
-                // stacked: true,
                 type: "linear",
                 max: "auto",
                 min: "auto",
@@ -560,6 +694,59 @@ function Data({ data }: { data: GameData[] }) {
             />
           </Grid>
         </Grid>
+
+        {/* <Grid item xs={6} style={{ height: 300 }}>
+          <Typography variant="h4">Order victory percentage</Typography>
+          <ResponsiveBar
+            data={Object.values(victoriesByOrder).map((ranks, index) => {
+              const totalGames = Object.values(ranks).reduce(
+                (acc, gameCount) => acc + gameCount
+              );
+              return {
+                name: placeNames[index],
+                first: places.first / totalGames,
+                second: places.second / totalGames,
+                third: places.third / totalGames,
+                fourth: places.fourth / totalGames,
+              };
+            })}
+            label={({ value }) => {
+              if (typeof value !== "number") return "";
+
+              return `${Math.round(value * 10000) / 100}%`;
+            }}
+            keys={placeNames as any}
+            indexBy="name"
+            margin={{ top: 10, right: 60, bottom: 80, left: 60 }}
+            colors={{ scheme: "category10" }}
+            legends={[
+              {
+                dataFrom: "keys",
+                anchor: "bottom",
+                direction: "row",
+                justify: false,
+                translateY: 60,
+                itemsSpacing: 2,
+                itemWidth: 100,
+                itemHeight: 20,
+                itemDirection: "left-to-right",
+                itemOpacity: 0.85,
+                symbolSize: 20,
+                effects: [
+                  {
+                    on: "hover",
+                    style: {
+                      itemOpacity: 1,
+                    },
+                  },
+                ],
+              },
+            ]}
+            animate={true}
+            motionStiffness={90}
+            motionDamping={15}
+          />
+        </Grid> */}
       </Box>
     </Container>
   );
