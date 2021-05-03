@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/catan-stats/static/css/main.5f361e03.chunk.css",
+    "main.js": "/catan-stats/static/js/main.80f9ce6c.chunk.js",
+    "main.js.map": "/catan-stats/static/js/main.80f9ce6c.chunk.js.map",
+    "runtime-main.js": "/catan-stats/static/js/runtime-main.4e7fa856.js",
+    "runtime-main.js.map": "/catan-stats/static/js/runtime-main.4e7fa856.js.map",
+    "static/js/2.34528251.chunk.js": "/catan-stats/static/js/2.34528251.chunk.js",
+    "static/js/2.34528251.chunk.js.map": "/catan-stats/static/js/2.34528251.chunk.js.map",
+    "index.html": "/catan-stats/index.html",
+    "precache-manifest.f61db2afb377451c959ddf8842ac284b.js": "/catan-stats/precache-manifest.f61db2afb377451c959ddf8842ac284b.js",
+    "service-worker.js": "/catan-stats/service-worker.js",
+    "static/css/main.5f361e03.chunk.css.map": "/catan-stats/static/css/main.5f361e03.chunk.css.map",
+    "static/js/2.34528251.chunk.js.LICENSE.txt": "/catan-stats/static/js/2.34528251.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.4e7fa856.js",
+    "static/js/2.34528251.chunk.js",
+    "static/css/main.5f361e03.chunk.css",
+    "static/js/main.80f9ce6c.chunk.js"
+  ]
+}
