@@ -15,7 +15,6 @@ specifiers:
   '@testing-library/jest-dom': ^4.2.4
   '@testing-library/react': ^9.5.0
   '@testing-library/user-event': ^7.2.1
-  '@types/date-fns': ^2.6.0
   '@types/jest': ^24.9.1
   '@types/node': ^12.20.41
   '@types/papaparse': ^5.3.1
@@ -46,7 +45,6 @@ dependencies:
   '@testing-library/jest-dom': 4.2.4
   '@testing-library/react': 9.5.0_react-dom@17.0.2+react@17.0.2
   '@testing-library/user-event': 7.2.1
-  '@types/date-fns': 2.6.0
   '@types/jest': 24.9.1
   '@types/node': 12.20.41
   '@types/papaparse': 5.3.1
@@ -2560,13 +2558,6 @@ packages:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
     dependencies:
       '@types/node': 12.20.41
-    dev: false
-
-  /@types/date-fns/2.6.0:
-    resolution: {integrity: sha1-sGLKRlYgApCb4MY6ZGftFzE2rME=}
-    deprecated: This is a stub types definition for date-fns (https://github.com/date-fns/date-fns). date-fns provides its own type definitions, so you don't need @types/date-fns installed!
-    dependencies:
-      date-fns: 2.28.0
     dev: false
 
   /@types/eslint-scope/3.7.3:
