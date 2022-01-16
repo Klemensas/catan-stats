@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./App.css";
 import { useCsvParser } from "./useCsvParser";
-import { useLocationUpdater } from "./useLocationUpdater";
+import { useQueryUpdater } from "./useQueryUpdater";
 import {
   Typography,
   TextField,
@@ -16,12 +16,12 @@ function App() {
   const fileQuery = searchParams.get("file");
 
   const [fileUrl, setFileUrl] = useState(fileQuery || "");
+  useQueryUpdater("file", fileUrl);
 
   console.time("parse");
   const { data, isLoading, error } = useCsvParser(fileUrl);
   console.timeEnd("parse");
-  console.error("pppp", data);
-  useLocationUpdater(fileUrl);
+  console.info("pppp", data);
 
   return (
     <Box pt={4}>
@@ -38,7 +38,7 @@ function App() {
         <Box maxWidth={600} width="100%" pt={2}>
           <TextField
             value={fileUrl}
-            label={error ? error?.toString() : "CSV or JSON URL"}
+            label={error ? error : "CSV or JSON URL"}
             variant="outlined"
             fullWidth
             error={!!error}

@@ -1,7 +1,7 @@
+import React from "react";
 import { faDice } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, Card, CardContent, Typography, Tooltip } from "@material-ui/core";
-import React, { useState } from "react";
 
 import { PlayerData } from "./Data";
 import { GameData } from "./useCsvParser";
@@ -74,12 +74,12 @@ function PlayerProfile({
   const games = playerGames.filter(
     ({ players }) => !!players[0].base && !!players[0].development
   );
-  const wonGames = games.filter(
-    ({ players }) => players[0].name === player?.name
-  );
+  // const wonGames = games.filter(
+  //   ({ players }) => players[0].name === player?.name
+  // );
 
   const gameStats = getGameStats(games, player?.name);
-  const winStats = getGameStats(wonGames, player?.name);
+  // const winStats = getGameStats(wonGames, player?.name);
 
   const playerAverages = {
     development: {

@@ -40,7 +40,7 @@ export type GameData = {
 };
 
 function handleUnrecognizedInput(input: string) {
-  alert("Unrecognized field");
+  alert(`Unrecognized field "${input}"`);
 
   return new Error(`Bad field: ${input}`);
 }
@@ -60,9 +60,10 @@ function parseDevelopment(baseString: string) {
   return { trade, politics, science };
 }
 
-function getExtraPointData(
-  name: string
-): { score: number; name: ExtraPointItem } {
+function getExtraPointData(name: string): {
+  score: number;
+  name: ExtraPointItem;
+} {
   const defenderPoints = /^(\d)+d/.exec(name);
   if (defenderPoints) return { score: +defenderPoints[1], name: "defender" };
 
@@ -144,7 +145,7 @@ function handlePlayerField(
 export const useCsvParser = (fileUrl: string) => {
   const [parsedData, setParsedData] = useState<GameData[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!fileUrl) return;
@@ -165,7 +166,6 @@ export const useCsvParser = (fileUrl: string) => {
         // Skip first 2 rows with meta data
         const dataRows = response.data.slice(2);
 
-        console.log("data", dataRows);
         const { data } = dataRows.reduce(
           (
             acc: { currentGame: GameData | null; data: GameData[] },
@@ -198,7 +198,8 @@ export const useCsvParser = (fileUrl: string) => {
         );
         setParsedData(data);
       } catch (error) {
-        setError(error);
+        if (error instanceof Error) setError(error.toString());
+        else setError("Unhandled error");
       }
       setIsLoading(false);
     }

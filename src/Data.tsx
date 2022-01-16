@@ -38,6 +38,7 @@ import { ResponsiveBar } from "@nivo/bar";
 
 import { GameData, GamePlayerData } from "./useCsvParser";
 import PlayerProfile from "./PlayerProfile";
+import { useQueryUpdater } from "./useQueryUpdater";
 
 const gameRecency = [
   { maxTime: 1209600000, color: "#0f9960", icon: faLaugh },
@@ -48,6 +49,7 @@ const gameRecency = [
 ];
 
 const placeNames = ["first", "second", "third", "fourth"] as const;
+const minGames = 5;
 
 export type PlayerData = {
   name: string;
@@ -69,13 +71,6 @@ function playersWithOrder(
   return players[0].order !== undefined;
 }
 
-type Ranks = {
-  first: number;
-  second: number;
-  third: number;
-  fourth: number;
-};
-
 function Data({ data }: { data: GameData[] }) {
   const lastGame = data[data.length - 1];
   const firstGame = data[0];
@@ -96,10 +91,17 @@ function Data({ data }: { data: GameData[] }) {
     ...new Set(data.flatMap((game) => game.players.map(({ name }) => name))),
   ];
 
-  const [blacklistedPlayers, setBlacklistedPlayers] = useState<string[]>([]);
+  const searchParams = new URLSearchParams(window.location.search.slice(1));
+  const queryPlayers = searchParams.get("players");
+  const queryPlayerList = queryPlayers?.split(",") || [];
+
+  const [whitelistedPlayers, setWhitelistedPlayers] =
+    useState<string[]>(queryPlayerList);
   const [requiredGameStats, setRequiredGameStats] = useState<
     Array<"order" | "point-details">
   >([]);
+
+  useQueryUpdater("players", whitelistedPlayers.join(","));
 
   const dateFilteredGames = data.filter(
     ({ date }) =>
@@ -111,7 +113,9 @@ function Data({ data }: { data: GameData[] }) {
 
   const playerFilteredGames = dateFilteredGames.filter(
     ({ players }) =>
-      !players.some(({ name }) => blacklistedPlayers.includes(name))
+      // TODO: with current ligic this is required for initial filtering when players are still undefined, this means that if users unselect everything it will render all players without any appearing as selected
+      !whitelistedPlayers.length ||
+      players.every(({ name }) => whitelistedPlayers.includes(name))
   );
 
   const gamesMissingStats = playerFilteredGames
@@ -155,15 +159,6 @@ function Data({ data }: { data: GameData[] }) {
           })
       );
 
-  const shownGamesMissingStats = gamesMissingStats.filter(({ gameNo }) =>
-    filteredGames.find((game) => game.gameNo === gameNo)
-  );
-
-  const dateAvailablePlayers = [
-    ...new Set(
-      dateFilteredGames.flatMap((game) => game.players.map(({ name }) => name))
-    ),
-  ];
   const players = filteredGames.reduce(
     (acc: Record<string, PlayerData>, game) => {
       game.players.forEach((player, index) => {
@@ -198,16 +193,19 @@ function Data({ data }: { data: GameData[] }) {
   );
 
   useEffect(() => {
-    const minGames = data.length * 0.2;
-    const playersBelowMinGameCount = Object.values(players)
-      .filter(({ totalGames }) => totalGames < minGames)
-      .map(({ name }) => name);
+    // TODO: if the list is populated by query values it will fail on invalid values
+    if (whitelistedPlayers.length) return;
 
-    if (playersBelowMinGameCount)
-      setBlacklistedPlayers(playersBelowMinGameCount);
+    const selectedPlayers = Object.values(players)
+      .filter(({ totalGames }) => totalGames >= minGames)
+      .map(({ name }) => name);
+    // }
+
+    setWhitelistedPlayers(selectedPlayers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const victoriesByOrder = filteredGames.reduce(
+  const rankingsByStartOrder = filteredGames.reduce(
     (
       acc: Partial<
         Record<
@@ -233,6 +231,16 @@ function Data({ data }: { data: GameData[] }) {
     },
     {}
   );
+
+  const shownGamesMissingStats = gamesMissingStats.filter(({ gameNo }) =>
+    filteredGames.find((game) => game.gameNo === gameNo)
+  );
+
+  const dateAvailablePlayers = [
+    ...new Set(
+      dateFilteredGames.flatMap((game) => game.players.map(({ name }) => name))
+    ),
+  ];
 
   return (
     <Container>
@@ -390,22 +398,22 @@ function Data({ data }: { data: GameData[] }) {
         )}
         <Box>
           {dateAvailablePlayers.map((name) => {
-            const isBlacklisted = blacklistedPlayers.includes(name);
+            const isWhitelisted = whitelistedPlayers.includes(name);
 
             return (
               <Chip
                 style={{ margin: 2 }}
                 key={name}
                 label={name}
-                variant={isBlacklisted ? "outlined" : undefined}
-                color={isBlacklisted ? undefined : "primary"}
-                onClick={() =>
-                  setBlacklistedPlayers(
-                    isBlacklisted
-                      ? blacklistedPlayers.filter((player) => player !== name)
-                      : [...blacklistedPlayers, name]
-                  )
-                }
+                variant={isWhitelisted ? undefined : "outlined"}
+                color={isWhitelisted ? "primary" : undefined}
+                onClick={() => {
+                  setWhitelistedPlayers(
+                    isWhitelisted
+                      ? whitelistedPlayers.filter((player) => player !== name)
+                      : [...whitelistedPlayers, name]
+                  );
+                }}
               />
             );
           })}
@@ -417,12 +425,8 @@ function Data({ data }: { data: GameData[] }) {
         </Box>
         <Grid container spacing={3}>
           {Object.values(players).map((player) => (
-            <Grid item sm={4}>
-              <PlayerProfile
-                key={player.name}
-                player={player}
-                playerGames={player.games}
-              />
+            <Grid item sm={4} key={player.name}>
+              <PlayerProfile player={player} playerGames={player.games} />
             </Grid>
           ))}
         </Grid>
@@ -488,7 +492,7 @@ function Data({ data }: { data: GameData[] }) {
                 if (!gameData) return <div>Missing game data</div>;
 
                 return (
-                  <Paper>
+                  <Paper elevation={2}>
                     <Box p={1} alignContent="left">
                       <div>{gameData.date}</div>
                       {gameData.players.map((player) => (
@@ -542,8 +546,8 @@ function Data({ data }: { data: GameData[] }) {
               margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
               tooltip={(slice) => (
                 <>
-                  <p>Games played: {players[slice.id].totalGames}</p>
-                  <p>Total wins: {players[slice.id].totalWins}</p>
+                  <div>Games played: {players[slice.id].totalGames}</div>
+                  <div>Total wins: {players[slice.id].totalWins}</div>
                 </>
               )}
               legends={[
@@ -695,21 +699,28 @@ function Data({ data }: { data: GameData[] }) {
           </Grid>
         </Grid>
 
-        {/* <Grid item xs={6} style={{ height: 300 }}>
+        <Grid item xs={6} style={{ height: 300 }}>
           <Typography variant="h4">Order victory percentage</Typography>
           <ResponsiveBar
-            data={Object.values(victoriesByOrder).map((ranks, index) => {
-              const totalGames = Object.values(ranks).reduce(
-                (acc, gameCount) => acc + gameCount
-              );
-              return {
-                name: placeNames[index],
-                first: places.first / totalGames,
-                second: places.second / totalGames,
-                third: places.third / totalGames,
-                fourth: places.fourth / totalGames,
-              };
-            })}
+            data={Object.entries(rankingsByStartOrder)
+              .map(([positionName, ranks], index) => {
+                const totalGames = Object.values(ranks).reduce(
+                  (acc, gameCount) => acc + gameCount
+                );
+
+                return {
+                  name: positionName,
+                  first: (ranks.first || 0) / totalGames,
+                  second: (ranks.second || 0) / totalGames,
+                  third: (ranks.third || 0) / totalGames,
+                  fourth: (ranks.fourth || 0) / totalGames,
+                };
+              })
+              .sort(
+                (a, b) =>
+                  placeNames.indexOf(a.name as any) -
+                  placeNames.indexOf(b.name as any)
+              )}
             label={({ value }) => {
               if (typeof value !== "number") return "";
 
@@ -746,7 +757,7 @@ function Data({ data }: { data: GameData[] }) {
             motionStiffness={90}
             motionDamping={15}
           />
-        </Grid> */}
+        </Grid>
       </Box>
     </Container>
   );
