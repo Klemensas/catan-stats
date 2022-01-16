@@ -470,7 +470,6 @@ function Data({ data }: { data: GameData[] }) {
               axisTop={null}
               axisRight={null}
               axisBottom={{
-                orient: "bottom",
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
@@ -534,21 +533,18 @@ function Data({ data }: { data: GameData[] }) {
                 label: player.name,
                 value: player.totalWins / player.totalGames,
               }))}
-              sliceLabel={({ value }) => `${Math.round(value * 10000) / 100}%`}
+              valueFormat={(value) => `${Math.round(value * 10000) / 100}%`}
               colors={{ scheme: "category10" }}
               innerRadius={0.4}
               padAngle={2}
-              radialLabelsLinkColor={{ from: "color", modifiers: [] }}
-              radialLabelsLinkStrokeWidth={4}
-              radialLabelsLinkOffset={4}
-              slicesLabelsSkipAngle={2}
-              radialLabelsSkipAngle={1}
               margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
-              tooltip={(slice) => (
-                <>
-                  <div>Games played: {players[slice.id].totalGames}</div>
-                  <div>Total wins: {players[slice.id].totalWins}</div>
-                </>
+              tooltip={({ datum }) => (
+                <Paper elevation={2}>
+                  <Box p={1} alignContent="left">
+                    <div>Games played: {players[datum.id].totalGames}</div>
+                    <div>Total wins: {players[datum.id].totalWins}</div>
+                  </Box>
+                </Paper>
               )}
               legends={[
                 {
@@ -585,7 +581,7 @@ function Data({ data }: { data: GameData[] }) {
                 })
               )}
               label={({ value }) => {
-                if (typeof value !== "number") return "";
+                if (!value) return "";
 
                 return `${Math.round(value * 10000) / 100}%`;
               }}
@@ -617,8 +613,6 @@ function Data({ data }: { data: GameData[] }) {
                 },
               ]}
               animate={true}
-              motionStiffness={90}
-              motionDamping={15}
             />
           </Grid>
 
@@ -657,7 +651,6 @@ function Data({ data }: { data: GameData[] }) {
               axisTop={null}
               axisRight={null}
               axisBottom={{
-                orient: "bottom",
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
@@ -722,7 +715,7 @@ function Data({ data }: { data: GameData[] }) {
                   placeNames.indexOf(b.name as any)
               )}
             label={({ value }) => {
-              if (typeof value !== "number") return "";
+              if (!value) return "";
 
               return `${Math.round(value * 10000) / 100}%`;
             }}
@@ -754,8 +747,6 @@ function Data({ data }: { data: GameData[] }) {
               },
             ]}
             animate={true}
-            motionStiffness={90}
-            motionDamping={15}
           />
         </Grid>
       </Box>
