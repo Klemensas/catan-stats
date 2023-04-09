@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   Typography,
   Card,
   CardContent,
   Tooltip,
   Chip,
-  TextField,
   Box,
   Grid,
   Paper,
@@ -27,18 +28,19 @@ import {
   faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import { format, formatDistanceToNow } from "date-fns";
-import {
-  DateRangePicker,
-  DateRange,
-  DateRangeDelimiter,
-} from "@material-ui/pickers";
+import DateRangePicker from "@wojtekmaj/react-daterange-picker";
 import { ResponsiveLine } from "@nivo/line";
 import { ResponsivePie } from "@nivo/pie";
 import { ResponsiveBar } from "@nivo/bar";
 
 import { GameData, GamePlayerData } from "./useCsvParser";
-import PlayerProfile from "./PlayerProfile";
+// import PlayerProfile from "./PlayerProfile";
 import { useQueryUpdater } from "./useQueryUpdater";
+import { Value } from "@wojtekmaj/react-daterange-picker/dist/cjs/shared/types";
+
+import "@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css";
+import "react-calendar/dist/Calendar.css";
+import PlayerProfile from "./PlayerProfile";
 
 const gameRecency = [
   { maxTime: 1209600000, color: "#0f9960", icon: faLaugh },
@@ -83,7 +85,7 @@ function Data({ data }: { data: GameData[] }) {
     (stage) => !stage.maxTime || timePastSinceLastGame < stage.maxTime
   );
 
-  const [displayRange, setDisplayRange] = useState<DateRange<Date>>([
+  const [displayRange, setDisplayRange] = useState<Value>([
     firstGameDate,
     lastGameDate,
   ]);
@@ -105,6 +107,7 @@ function Data({ data }: { data: GameData[] }) {
 
   const dateFilteredGames = data.filter(
     ({ date }) =>
+      displayRange instanceof Array &&
       displayRange[0] &&
       displayRange[1] &&
       displayRange[0] <= new Date(date) &&
@@ -311,23 +314,12 @@ function Data({ data }: { data: GameData[] }) {
       >
         <Box>
           <DateRangePicker
-            startText="Start date"
-            endText="End date"
-            label={null}
+            allowPartialRange={false}
             value={displayRange}
-            disableFuture
-            disableHighlightToday
-            reduceAnimations
+            defaultValue={[firstGameDate, lastGameDate]}
             minDate={firstGameDate}
             maxDate={lastGameDate}
             onChange={setDisplayRange}
-            renderInput={(startProps, endProps) => (
-              <React.Fragment>
-                <TextField {...startProps} size="small" helperText={null} />
-                <DateRangeDelimiter> to </DateRangeDelimiter>
-                <TextField {...endProps} size="small" helperText={null} />
-              </React.Fragment>
-            )}
           />
         </Box>
         {!!gamesMissingStats.length && (
@@ -373,7 +365,7 @@ function Data({ data }: { data: GameData[] }) {
             <Tooltip
               title={shownGamesMissingStats.map(({ gameNo, missingFields }) => {
                 return (
-                  <Box>
+                  <Box key={gameNo}>
                     Game #{gameNo} is missing - {missingFields.join(", ")} data
                   </Box>
                 );
@@ -495,7 +487,7 @@ function Data({ data }: { data: GameData[] }) {
                     <Box p={1} alignContent="left">
                       <div>{gameData.date}</div>
                       {gameData.players.map((player) => (
-                        <div>
+                        <div key={player.name}>
                           {player.name}: {player.score}
                         </div>
                       ))}

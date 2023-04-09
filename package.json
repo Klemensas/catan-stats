@@ -1,58 +1,43 @@
 {
-  "name": "catan-stats",
+  "name": "catan-next",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://klemensas.net/catan-stats",
-  "dependencies": {
-    "@date-io/date-fns": "^2.11.0",
-    "@fortawesome/fontawesome-svg-core": "^1.2.36",
-    "@fortawesome/free-solid-svg-icons": "^5.15.4",
-    "@fortawesome/react-fontawesome": "^0.1.16",
-    "@material-ui/core": "^4.12.3",
-    "@material-ui/pickers": "^4.0.0-alpha.12",
-    "@nivo/bar": "^0.79.1",
-    "@nivo/bump": "^0.79.1",
-    "@nivo/core": "^0.79.0",
-    "@nivo/line": "^0.79.1",
-    "@nivo/pie": "^0.79.1",
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.5.0",
-    "@testing-library/user-event": "^7.2.1",
-    "@types/jest": "^24.9.1",
-    "@types/node": "^12.20.41",
-    "@types/papaparse": "^5.3.1",
-    "@types/react": "^17.0.38",
-    "@types/react-date-range": "^0.95.4",
-    "@types/react-dom": "^17.0.11",
-    "date-fns": "^2.28.0",
-    "gh-pages": "^3.2.3",
-    "papaparse": "^5.3.1",
-    "react": "^17.0.2",
-    "react-date-range": "^1.4.0",
-    "react-dom": "^17.0.2",
-    "react-scripts": "5.0.0",
-    "typescript": "~4.5.4"
-  },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "deploy": "gh-pages -d build"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
-  "eslintConfig": {
-    "extends": "react-app"
+  "dependencies": {
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@fortawesome/fontawesome-svg-core": "^6.4.0",
+    "@fortawesome/free-solid-svg-icons": "^6.4.0",
+    "@fortawesome/react-fontawesome": "^0.2.0",
+    "@mui/material": "^5.11.16",
+    "@mui/x-date-pickers": "^6.0.4",
+    "@nivo/bar": "^0.80.0",
+    "@nivo/bump": "^0.80.0",
+    "@nivo/core": "^0.80.0",
+    "@nivo/line": "^0.80.0",
+    "@nivo/pie": "^0.80.0",
+    "@types/node": "18.15.11",
+    "@types/react": "18.0.33",
+    "@types/react-dom": "18.0.11",
+    "@wojtekmaj/react-daterange-picker": "^5.0.1",
+    "autoprefixer": "10.4.14",
+    "date-fns": "^2.29.3",
+    "dayjs": "^1.11.7",
+    "eslint": "8.38.0",
+    "eslint-config-next": "13.3.0",
+    "next": "13.2.4",
+    "papaparse": "^5.4.1",
+    "postcss": "8.4.21",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "typescript": "5.0.4"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "devDependencies": {
+    "eslint-config-prettier": "^8.8.0"
   }
 }

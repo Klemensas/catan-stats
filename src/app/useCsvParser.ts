@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { parse, ParseResult } from "papaparse";
 
 // const corsProxy = "https://cors-anywhere.herokuapp.com/";
-const corsProxy = "https://pure-journey-53329.herokuapp.com/cors?q=";
+// const corsProxy = "https://pure-journey-53329.herokuapp.com/cors?q=";
+const corsProxy = "http://localhost:3000/api/data?file=";
 
 const extraPointMap = {
   roads: 2,
@@ -165,12 +166,13 @@ export const useCsvParser = (fileUrl: string) => {
 
         // Skip first 2 rows with meta data
         const dataRows = response.data.slice(2);
+        console.log("aaaaa", dataRows, response);
 
         const { data } = dataRows.reduce(
           (
             acc: { currentGame: GameData | null; data: GameData[] },
             row: string[],
-            index
+            index: number
           ) => {
             const [gameNo, date, field, ...players] = row.slice(0, 7);
             if (gameNo) {

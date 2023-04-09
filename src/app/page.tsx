@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import "./App.css";
-import { useCsvParser } from "./useCsvParser";
-import { useQueryUpdater } from "./useQueryUpdater";
+"use client";
+
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+
 import {
   Typography,
   TextField,
@@ -9,10 +10,14 @@ import {
   CircularProgress,
   Box,
 } from "@material-ui/core";
-import Data from "./Data";
 
-function App() {
-  const searchParams = new URLSearchParams(window.location.search.slice(1));
+import { useQueryUpdater } from "./useQueryUpdater";
+import { useCsvParser } from "./useCsvParser";
+import Data from "./Data";
+// import Data from "./Data";
+
+export default function Home() {
+  const searchParams = useSearchParams();
   const fileQuery = searchParams.get("file");
 
   const [fileUrl, setFileUrl] = useState(fileQuery || "");
@@ -54,8 +59,7 @@ function App() {
         </Box>
       </Box>
       {data && <Data data={data} />}
+      {/* {data && "data"} */}
     </Box>
   );
 }
-
-export default App;
