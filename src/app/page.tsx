@@ -9,7 +9,7 @@ import {
   InputAdornment,
   CircularProgress,
   Box,
-} from "@material-ui/core";
+} from "@mui/material";
 
 import { useQueryUpdater } from "./useQueryUpdater";
 import { useCsvParser } from "./useCsvParser";
@@ -26,7 +26,6 @@ export default function Home() {
   console.time("parse");
   const { data, isLoading, error } = useCsvParser(fileUrl);
   console.timeEnd("parse");
-  console.info("pppp", data);
 
   return (
     <Box pt={4}>
@@ -59,7 +58,6 @@ export default function Home() {
         </Box>
       </Box>
       {data && <Data data={data} />}
-      {/* {data && "data"} */}
     </Box>
   );
 }

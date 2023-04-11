@@ -14,7 +14,7 @@ import {
   FormControlLabel,
   Switch,
   colors,
-} from "@material-ui/core";
+} from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faDice,
@@ -32,15 +32,14 @@ import DateRangePicker from "@wojtekmaj/react-daterange-picker";
 import { ResponsiveLine } from "@nivo/line";
 import { ResponsivePie } from "@nivo/pie";
 import { ResponsiveBar } from "@nivo/bar";
+import { Value } from "@wojtekmaj/react-daterange-picker/dist/cjs/shared/types";
 
 import { GameData, GamePlayerData } from "./useCsvParser";
-// import PlayerProfile from "./PlayerProfile";
 import { useQueryUpdater } from "./useQueryUpdater";
-import { Value } from "@wojtekmaj/react-daterange-picker/dist/cjs/shared/types";
+import PlayerProfile from "./PlayerProfile";
 
 import "@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css";
 import "react-calendar/dist/Calendar.css";
-import PlayerProfile from "./PlayerProfile";
 
 const gameRecency = [
   { maxTime: 1209600000, color: "#0f9960", icon: faLaugh },
@@ -99,9 +98,11 @@ function Data({ data }: { data: GameData[] }) {
 
   const [whitelistedPlayers, setWhitelistedPlayers] =
     useState<string[]>(queryPlayerList);
-  const [requiredGameStats, setRequiredGameStats] = useState<
-    Array<"order" | "point-details">
-  >([]);
+  const [requiredGameStats, setRequiredGameStats] = useState({
+    onlyGamesWithAllPlayers: false,
+    requireOrder: false,
+    requirePointDetails: false,
+  });
 
   useQueryUpdater("players", whitelistedPlayers.join(","));
 
@@ -118,7 +119,9 @@ function Data({ data }: { data: GameData[] }) {
     ({ players }) =>
       // TODO: with current ligic this is required for initial filtering when players are still undefined, this means that if users unselect everything it will render all players without any appearing as selected
       !whitelistedPlayers.length ||
-      players.every(({ name }) => whitelistedPlayers.includes(name))
+      (players.every(({ name }) => whitelistedPlayers.includes(name)) &&
+        (!requiredGameStats.onlyGamesWithAllPlayers ||
+          players.length === whitelistedPlayers.length))
   );
 
   const gamesMissingStats = playerFilteredGames
@@ -139,7 +142,9 @@ function Data({ data }: { data: GameData[] }) {
       };
     });
 
-  const filteredGames = !requiredGameStats.length
+  const shouldFilterGames =
+    requiredGameStats.requireOrder || requiredGameStats.requirePointDetails;
+  const filteredGames = !shouldFilterGames
     ? playerFilteredGames
     : playerFilteredGames.filter(
         (game) =>
@@ -147,13 +152,13 @@ function Data({ data }: { data: GameData[] }) {
             if (gameNo !== game.gameNo) return false;
 
             if (
-              requiredGameStats.includes("order") &&
+              requiredGameStats.requireOrder &&
               missingFields.includes("order")
             )
               return true;
 
             if (
-              requiredGameStats.includes("point-details") &&
+              requiredGameStats.requirePointDetails &&
               missingFields.some((field) => field !== "order")
             )
               return true;
@@ -329,13 +334,12 @@ function Data({ data }: { data: GameData[] }) {
                 control={
                   <Switch
                     size="small"
-                    checked={!requiredGameStats.includes("order")}
+                    checked={!requiredGameStats.requireOrder}
                     onChange={() =>
-                      setRequiredGameStats((requiredStats) =>
-                        requiredStats.includes("order")
-                          ? requiredStats.filter((stat) => stat !== "order")
-                          : [...requiredStats, "order"]
-                      )
+                      setRequiredGameStats((requiredStats) => ({
+                        ...requiredStats,
+                        requireOrder: !requiredStats.requireOrder,
+                      }))
                     }
                     color="primary"
                   />
@@ -346,15 +350,12 @@ function Data({ data }: { data: GameData[] }) {
                 control={
                   <Switch
                     size="small"
-                    checked={!requiredGameStats.includes("point-details")}
+                    checked={!requiredGameStats.requirePointDetails}
                     onChange={() =>
-                      setRequiredGameStats((requiredStats) =>
-                        requiredStats.includes("point-details")
-                          ? requiredStats.filter(
-                              (stat) => stat !== "point-details"
-                            )
-                          : [...requiredStats, "point-details"]
-                      )
+                      setRequiredGameStats((requiredStats) => ({
+                        ...requiredStats,
+                        requirePointDetails: !requiredStats.requirePointDetails,
+                      }))
                     }
                     color="primary"
                   />
@@ -389,6 +390,25 @@ function Data({ data }: { data: GameData[] }) {
           </Box>
         )}
         <Box>
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                checked={requiredGameStats.onlyGamesWithAllPlayers}
+                onChange={() =>
+                  setRequiredGameStats((requiredStats) => ({
+                    ...requiredStats,
+                    onlyGamesWithAllPlayers:
+                      !requiredStats.onlyGamesWithAllPlayers,
+                  }))
+                }
+                color="primary"
+              />
+            }
+            label="Only games with all players"
+          />
+        </Box>
+        <Box>
           {dateAvailablePlayers.map((name) => {
             const isWhitelisted = whitelistedPlayers.includes(name);
 
@@ -418,11 +438,10 @@ function Data({ data }: { data: GameData[] }) {
         <Grid container spacing={3}>
           {Object.values(players).map((player) => (
             <Grid item sm={4} key={player.name}>
-              <PlayerProfile player={player} playerGames={player.games} />
+              <PlayerProfile player={player} />
             </Grid>
           ))}
         </Grid>
-        {/* <PlayerProfile playerGames={filteredGames} /> */}
       </Box>
       <Box mt={4}>
         <Grid container spacing={3}>
@@ -474,7 +493,10 @@ function Data({ data }: { data: GameData[] }) {
               pointBorderWidth={2}
               useMesh
               enableCrosshair={false}
-              yFormat={(value) => `${Math.round(+value * 10000) / 100}%`}
+              axisLeft={{
+                format: (value) =>
+                  Number(value).toLocaleString("en", { style: "percent" }),
+              }}
               tooltip={(item) => {
                 // Read from formatted data
                 const gameData = data.find(
